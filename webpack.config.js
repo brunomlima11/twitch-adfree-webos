@@ -24,7 +24,13 @@ const makeConfig = () => [
     module: {
       rules: [
         {
+          // Import as a plain string (no Babel, no wrapping), e.g. worker sources
+          resourceQuery: /raw/,
+          type: 'asset/source'
+        },
+        {
           test: /\.[mc]?js$/i,
+          resourceQuery: { not: [/raw/] },
 
           loader: 'babel-loader',
           exclude: [

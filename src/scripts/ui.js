@@ -257,20 +257,20 @@ function createConfigCheckbox(key) {
       }
     };
 
-    const cyclePosition = (dir) => {
-      const current = String(configRead(CHAT_POSITION));
+    const cycleOption = (dir) => {
+      const current = String(configRead(key));
       const idx = options.indexOf(current);
       const nextIdx =
         (idx + (dir === 'next' ? 1 : -1) + options.length) % options.length;
       const next = options[nextIdx];
-      configWrite(CHAT_POSITION, next);
+      configWrite(key, next);
       valueSpan.textContent = next;
     };
 
-    if (key === CHAT_POSITION) {
-      valueSpan.textContent = String(configRead(CHAT_POSITION));
-      decBtn.addEventListener('click', () => cyclePosition('prev'));
-      incBtn.addEventListener('click', () => cyclePosition('next'));
+    if (options) {
+      valueSpan.textContent = String(configRead(key));
+      decBtn.addEventListener('click', () => cycleOption('prev'));
+      incBtn.addEventListener('click', () => cycleOption('next'));
     } else {
       decBtn.addEventListener('click', () => {
         const current = Number(configRead(key));

@@ -4,3 +4,4 @@ import './scripts/claim_community_points.js';
 import './scripts/emotes.js';
 import './scripts/screen_saver_responder.js';
 import './scripts/low_latency.js';
+import './scripts/start_tab.js';

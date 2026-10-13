@@ -3,11 +3,7 @@ import {
   CUSTOM_PROXY_URL,
   USE_CUSTOM_PROXY
 } from '../constants/config.constants';
-import { APP_VERSION } from '../constants/global.constants';
-
-const patchAmazonWorkerUrl =
-  'https://adamff-dev.github.io/twitch-adfree-webos/src/scripts/patch_amazon_worker.js?v=' +
-  APP_VERSION; // For cache busting
+import patchAmazonWorkerSrc from './patch_amazon_worker.js?raw';
 
 (function () {
   // From vaft script (https://github.com/pixeltris/TwitchAdSolutions/blob/master/vaft/vaft.user.js#L299)
@@ -33,12 +29,10 @@ const patchAmazonWorkerUrl =
       const blobUrl = URL.createObjectURL(
         new Blob([
           `
-            useProxy = ${useProxy};
-            proxyUrl = '${proxyUrl}';
+            useProxy = ${JSON.stringify(!!useProxy)};
+            proxyUrl = ${JSON.stringify(String(proxyUrl || ''))};
 
-            importScripts(
-              '${patchAmazonWorkerUrl}',
-            );
+            ${patchAmazonWorkerSrc}
 
             ${workerString}
         `

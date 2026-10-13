@@ -10,6 +10,7 @@ export const CHAT_OVERLAY_HEIGHT = 'chatOverlayHeight';
 export const CHAT_OVERLAY_FONT_SIZE = 'chatOverlayFontSize';
 export const CHAT_OVERLAY_TRANSPARENCY = 'chatOverlayTransparency';
 export const ENABLE_LOW_LATENCY = 'enableLowLatency';
+export const START_TAB = 'startTab';
 export const USE_CUSTOM_PROXY = 'useCustomProxy';
 export const CUSTOM_PROXY_URL = 'customProxyUrl';
 export const ACTION_RESET_CONFIG = 'actionResetConfig';
@@ -18,6 +19,11 @@ export const configOptions = {
   [ENABLE_LOW_LATENCY]: {
     default: false,
     desc: 'Enable low latency mode (experimental)'
+  },
+  [START_TAB]: {
+    default: 'Home',
+    options: ['Home', 'Following', 'Browse', 'Search'],
+    desc: 'Tab to open when the app starts'
   },
   [USE_CUSTOM_PROXY]: {
     default: true,
