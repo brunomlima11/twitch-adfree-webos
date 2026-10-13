@@ -4,6 +4,14 @@ A webOS application that enhances your Twitch viewing experience by blocking ads
 
 Based on [youtube-webos](https://github.com/webosbrew/youtube-webos)
 
+> **About this fork** (branch `local-mods`)
+>
+> This is a personal fork of [adamff-dev/twitch-adfree-webos](https://github.com/adamff-dev/twitch-adfree-webos) with two changes. See [Fork changes](#fork-changes) for details.
+>
+> 1. The worker ad-block patch is bundled inside the app instead of being downloaded from GitHub Pages at runtime.
+> 2. New **Start tab** setting (Home / Following / Browse / Search).
+
+
 ## Features
 
 - **Ad Blocking:** Mute and hide ads automatically
@@ -21,6 +29,54 @@ Based on [youtube-webos](https://github.com/webosbrew/youtube-webos)
   - 4️⃣ — Search
 
 **Note:** Configuration screen can be opened by pressing 🟩 GREEN button on the remote.
+
+## Fork changes
+
+### 1. Worker patch bundled instead of fetched remotely
+
+Upstream, `src/scripts/twitch_no_sub.js` replaces Twitch's player `Worker` with a blob that runs
+`importScripts('https://adamff-dev.github.io/twitch-adfree-webos/src/scripts/patch_amazon_worker.js?v=<version>')`.
+That script is downloaded on every app version with no integrity check, and it runs inside the player worker, where it can see and rewrite every playlist request. So whoever controls that GitHub Pages site can change what runs on the TV without a new app release.
+
+In this fork:
+
+- `patch_amazon_worker.js` is imported as a raw string (`import src from './patch_amazon_worker.js?raw'`). It is inlined into the worker blob, so the app makes no remote code request.
+- `webpack.config.js` gets a rule `{ resourceQuery: /raw/, type: 'asset/source' }`, and Babel skips `?raw` imports. The worker source stays a plain, untransformed script.
+- `useProxy` and `proxyUrl` are written into the blob with `JSON.stringify`. Upstream wraps the URL in single quotes as-is, which breaks if the URL contains a `'`.
+- The logic of `patch_amazon_worker.js` is unchanged. At the time of the fork, the copy hosted on GitHub Pages was byte-identical to the one in the repo (sha256 `2ae13106…c518`).
+
+Note: the proxy setting is still on by default, so live playlists still go through `as.luminous.dev`. That service sees your IP and the channel name. You can turn it off in the settings (*Use custom proxy URL for HLS streaming*).
+
+### 2. Start tab setting
+
+New option **"Tab to open when the app starts"**: Home (default), Following, Browse or Search.
+
+- `src/scripts/start_tab.js` runs once per app launch (guarded by a `sessionStorage` flag). It acts only when the app lands on `/`, so launching straight into a channel still works.
+- It switches routes with the Next.js client router (`window.next.router.replace`), which needs no page reload. If the router does not appear within 10 s, it falls back to `location.replace`.
+- The redirect happens in the userscript, not in `index.js`, because settings are stored in the `lg.tv.twitch.tv` origin's localStorage, which the app's launch page cannot read.
+- Routes: Following → `/following`, Browse → `/directory`, Search → `/search`.
+- `src/scripts/ui.js`: left/right cycling was hard-wired to the chat position option. It now works for any option that has an `options` list.
+
+**Known limitation:** the tab switch takes about 5–6 s on a webOS 6 TV. Measured on the device, Twitch loads the home page first (DOMContentLoaded at ~4.5 s), and webOS injects the userscript only after that (~5.6 s). The route switch itself happens ~0.2 s later. Removing the delay would require the launch page to know the setting before it navigates.
+
+### Building
+
+Tested with Node 22 and pnpm 8 (`pnpm-lock.yaml` is lockfile v6; pnpm 10 refuses `--frozen-lockfile`):
+
+```sh
+corepack prepare pnpm@8.15.9 --activate
+pnpm install --frozen-lockfile
+pnpm run build && pnpm run package   # -> twitch.adamffdev.v1_<version>_all.ipk
+```
+
+The app id is unchanged (`twitch.adamffdev.v1`), so the package installs over the upstream app and keeps your login and settings. A newer upstream version offered by the Homebrew Channel would replace this build.
+
+Sideload on a rooted TV:
+
+```sh
+luna-send -w 60000 -i -f luna://com.webos.appInstallService/dev/install \
+  '{"id":"com.ares.defaultName","ipkUrl":"/tmp/app.ipk","subscribe":true}'
+```
 
 ## Screenshots
 
