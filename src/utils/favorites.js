@@ -60,7 +60,7 @@ export function saveFavorites(list) {
   window.dispatchEvent(new CustomEvent(FAVORITES_EVENT));
 }
 
-function sameChannel(fav, node) {
+export function sameChannel(fav, node) {
   if (!node) return false;
   if (fav.id && node.id && String(node.id) === fav.id) return true;
   return !!(
@@ -74,7 +74,7 @@ function sameChannel(fav, node) {
  * Moves favorites to the front of an edge list (favorites order); the other
  * edges keep their original order. Returns a new array of the same length.
  */
-function reorderEdges(edges, favorites) {
+export function reorderEdges(edges, favorites) {
   const used = new Set();
   const front = [];
   favorites.forEach((fav) => {

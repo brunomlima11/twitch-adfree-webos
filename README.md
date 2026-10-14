@@ -67,10 +67,11 @@ Favorite channels are shown first on the Following page ("Canais ao vivo seguido
 - **Yellow button** on a channel page (`/<login>`, also in fullscreen) adds or removes that channel. A toast confirms it ("⭐ <nome> adicionado aos favoritos" / "<nome> removido dos favoritos").
 - **Green settings panel**, new "Favoritos" section: lists favorites with move up, move down and remove buttons (D-pad navigable). Empty state: "Nenhum favorito. Aperte o botão amarelo na página de um canal para favoritar."
 - Storage: `localStorage['taf-favorites']`, an ordered array of `{login, id, displayName}`. The id comes from a `user(login:)` GQL lookup, because the live-channels nodes of the Following response have no `login`, only `id`.
-- `src/scripts/favorites.js` wraps `window.fetch` (Twitch uses `fetch` for GQL, not XHR). Only POSTs to `gql.twitch.tv/gql` whose body contains `query FollowingPage_Query(` are touched: the response is rebuilt with favorites moved to the front of `followedLiveUsers.edges` and `follows.edges` (counts and cursors unchanged). On any error the original response is returned untouched.
+- `src/scripts/favorites.js` wraps `window.fetch` (Twitch uses `fetch` for GQL, not XHR). Only POSTs to `gql.twitch.tv/gql` whose body contains `query FollowingPage_Query(` (first 25 follows) or `query OfflineInfiniteShelf_Query(` (offline row pagination, 8 at a time) are touched. The response is rebuilt with favorites first in `followedLiveUsers.edges` and `follows.edges`. On any error the original response is returned untouched.
+- Offline favorites always come first in the "Canais off-line seguidos" row, even when they sit on a later page: the first page fetches the missing favorites' nodes (same field selection as the `OfflineInfiniteShelf_followedUsers` fragment) and prepends them, trimming the same number of tail edges so the page size and the pagination cursor stay valid. Later pages drop the injected favorites and are refilled from their cursor, so nothing shows twice and nothing is lost (verified against the unmodified channel list).
 - Storage and reorder helpers are in `src/utils/favorites.js`; the settings section is in `src/scripts/ui.js`.
 
-**Known limits:** the new order shows on the next load of `/following` (navigate away and back; no live refresh). Reordering applies per page of results, so a favorite that sits on a later page of the "follows" list (25 per page) is not pulled to the first page. A favorite that is not live is only reordered inside the follows list.
+**Known limits:** the new order shows on the next load of `/following` (navigate away and back; no live refresh). Favorites in the "live" row are reordered only within the first 25 live channels.
 
 ### Building
 
