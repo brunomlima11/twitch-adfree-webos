@@ -276,3 +276,44 @@ body.with-chat-overlay main > aside > div > div > div:nth-of-type(3) {
   font-weight: bold;
   background-color: rgba(0, 0, 0, 0.75);
 }
+
+.taf-favorites {
+  margin-bottom: 24px;
+}
+
+.taf-favorites h2 {
+  margin: 0 0 8px 0;
+  color: #9147ff;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.taf-favorites-empty {
+  margin: 0;
+  color: #adadb8;
+  font-size: 1.5rem;
+}
+
+.taf-favorite-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  font-size: 1.7rem;
+}
+
+.taf-favorite-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.taf-favorite-row button {
+  color: #c097ff;
+}
+
+.taf-favorite-row button:focus {
+  outline: 2px solid #b583ff;
+  outline-offset: 2px;
+}

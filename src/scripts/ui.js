@@ -7,6 +7,11 @@ import {
   configGetDesc
 } from '../config.js';
 import '../style/ui.css';
+import {
+  FAVORITES_EVENT,
+  getFavorites,
+  saveFavorites
+} from '../utils/favorites.js';
 import { APP_VERSION } from '../constants/global.constants.js';
 import {
   configOptions,
@@ -304,6 +309,100 @@ function createConfigCheckbox(key) {
   return elmLabel;
 }
 
+function createFavoritesSection() {
+  const section = document.createElement('div');
+  section.classList.add('taf-favorites');
+
+  const render = (focusTarget) => {
+    const favorites = getFavorites();
+    section.textContent = '';
+
+    const title = document.createElement('h2');
+    title.textContent = 'Favoritos';
+    section.appendChild(title);
+
+    if (!favorites.length) {
+      const empty = document.createElement('p');
+      empty.classList.add('taf-favorites-empty');
+      empty.textContent =
+        'Nenhum favorito. Aperte o botão amarelo na página de um canal para favoritar.';
+      section.appendChild(empty);
+      return;
+    }
+
+    const move = (from, to) => {
+      const list = getFavorites();
+      const [item] = list.splice(from, 1);
+      list.splice(to, 0, item);
+      saveFavorites(list);
+      return to;
+    };
+
+    favorites.forEach((fav, i) => {
+      const row = document.createElement('div');
+      row.classList.add('taf-favorite-row');
+
+      const name = document.createElement('span');
+      name.classList.add('taf-favorite-name');
+      name.textContent = `${i + 1}. ${fav.displayName || fav.login}`;
+      row.appendChild(name);
+
+      const actions = [
+        ['▲', 'Subir', i > 0, () => move(i, i - 1)],
+        ['▼', 'Descer', i < favorites.length - 1, () => move(i, i + 1)],
+        [
+          '✖',
+          'Remover',
+          true,
+          () => {
+            const list = getFavorites();
+            list.splice(i, 1);
+            saveFavorites(list);
+            return Math.min(i, list.length - 1);
+          }
+        ]
+      ];
+      actions.forEach(([label, aria, enabled, action], a) => {
+        // Skip unavailable moves: disabled buttons can't take focus
+        if (!enabled) return;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.tabIndex = 0;
+        btn.textContent = label;
+        btn.setAttribute('aria-label', `${aria} ${fav.login}`);
+        btn.dataset.action = String(a);
+        btn.addEventListener('click', () => {
+          const newIndex = action();
+          render({ row: newIndex, action: a });
+        });
+        row.appendChild(btn);
+      });
+      section.appendChild(row);
+    });
+
+    if (focusTarget) {
+      const rows = section.querySelectorAll('.taf-favorite-row');
+      const row = rows[focusTarget.row];
+      if (row) {
+        const wanted = row.querySelector(
+          `button[data-action="${focusTarget.action}"]`
+        );
+        (wanted || row.querySelector('button'))?.focus();
+      }
+    }
+  };
+
+  render();
+  window.addEventListener(FAVORITES_EVENT, () => {
+    const hadFocus = section.contains(document.activeElement);
+    render();
+    if (hadFocus && !section.contains(document.activeElement)) {
+      optionsPanel.focus();
+    }
+  });
+  return section;
+}
+
 function createOptionsPanel() {
   const elmContainer = document.createElement('div');
   elmContainer.classList.add('taf-ui-container');
@@ -383,6 +482,7 @@ function createOptionsPanel() {
   });
 
   elmContainer.appendChild(optionsList);
+  elmContainer.appendChild(createFavoritesSection());
 
   // Footer
   const footer = document.createElement('footer');

@@ -10,6 +10,7 @@ Based on [youtube-webos](https://github.com/webosbrew/youtube-webos)
 >
 > 1. The worker ad-block patch is bundled inside the app instead of being downloaded from GitHub Pages at runtime.
 > 2. New **Start tab** setting (Home / Following / Browse / Search).
+> 3. **Favorite channels**: pinned to the front of the Following page (UI in pt-BR).
 
 
 ## Features
@@ -58,6 +59,18 @@ New option **"Tab to open when the app starts"**: Home (default), Following, Bro
 - `src/scripts/ui.js`: left/right cycling was hard-wired to the chat position option. It now works for any option that has an `options` list.
 
 **Known limitation:** the tab switch takes about 5–6 s on a webOS 6 TV. Measured on the device, Twitch loads the home page first (DOMContentLoaded at ~4.5 s), and webOS injects the userscript only after that (~5.6 s). The route switch itself happens ~0.2 s later. Removing the delay would require the launch page to know the setting before it navigates.
+
+### 3. Favorite channels
+
+Favorite channels are shown first on the Following page ("Canais ao vivo seguidos" row and the full follows list). The UI is in Portuguese (pt-BR).
+
+- **Yellow button** on a channel page (`/<login>`, also in fullscreen) adds or removes that channel. A toast confirms it ("⭐ <nome> adicionado aos favoritos" / "<nome> removido dos favoritos").
+- **Green settings panel**, new "Favoritos" section: lists favorites with move up, move down and remove buttons (D-pad navigable). Empty state: "Nenhum favorito. Aperte o botão amarelo na página de um canal para favoritar."
+- Storage: `localStorage['taf-favorites']`, an ordered array of `{login, id, displayName}`. The id comes from a `user(login:)` GQL lookup, because the live-channels nodes of the Following response have no `login`, only `id`.
+- `src/scripts/favorites.js` wraps `window.fetch` (Twitch uses `fetch` for GQL, not XHR). Only POSTs to `gql.twitch.tv/gql` whose body contains `query FollowingPage_Query(` are touched: the response is rebuilt with favorites moved to the front of `followedLiveUsers.edges` and `follows.edges` (counts and cursors unchanged). On any error the original response is returned untouched.
+- Storage and reorder helpers are in `src/utils/favorites.js`; the settings section is in `src/scripts/ui.js`.
+
+**Known limits:** the new order shows on the next load of `/following` (navigate away and back; no live refresh). Reordering applies per page of results, so a favorite that sits on a later page of the "follows" list (25 per page) is not pulled to the first page. A favorite that is not live is only reordered inside the follows list.
 
 ### Building
 
